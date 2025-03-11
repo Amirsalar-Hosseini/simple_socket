@@ -1,28 +1,6 @@
 import socket
 
-server_ip = "127.0.0.1"
-server_port = 8000
-
-
-def run_client():
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect((server_ip, server_port))
-    
-
-    while True:
-        msg = input("enter a message: ")
-        client.send(msg.encode("utf-8")[:1024])
-
-        response = client.recv(1024)
-        response = response.decode("utf-8")
-        
-        if response.lower() == "closed":
-            break
-
-
-        print(f"received: {response}")
-
-    client.close()
-
-
-run_client()
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+    sock.connect(('127.0.0.1', 8001))
+    sock.send(bytes('message from client', 'UTF-8'))
+    print(str(sock.recv(1024), 'UTF-8'))
