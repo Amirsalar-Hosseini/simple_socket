@@ -1,47 +1,24 @@
-import socket
+import socketserver
 import threading
 
 
-server_ip = "127.0.0.1"
-server_port = 8000
+class ThreadedTCPHandler(socketserver.BaseRequestHandler):
+    def handle(self):
+        data = self.request.recv(1024)
+        cur_thread = threading.current_thread()
+        response = f"{cur_thread.name}, {data}".encode('utf-8')
+        print("sending response....")
+        self.request.send(response)
+        return
 
 
 
-def handle_client(client_socket, client_address):
-
-    try:
-        while True:
-            request = client_socket.recv(1024).decode("utf-8")
-            if request.lower() == "close":
-                client_socket.send("closed".encode("utf-8"))
-                break
-            print(f"received: {request}")
-            client_socket.send("accepted".encode("utf-8"))
-    except Exception as e:
-        print(f"ERROR when handling client: {e}")
-    finally:
-        client_socket.close()
-        print(f"connecting to client ({client_address[0]}: {client_address[1]}) closed")
-
-def run_server():
-    try:
-        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server.bind((server_ip, server_port))
-        server.listen()
-
-        print(f"listening on port {server_ip}: {server_port}")
+class ThreadedTCPServer(socketserver.ThreadingTCPServer):
+    pass
 
 
-        while True:
-            client_socket, client_address = server.accept()
-            print(f"accepted connection from ({client_address[0]} : {client_address[1]})")
-            thread = threading.Thread(target=handle_client, args=(client_socket, client_address))
-            thread.start()
 
 
-    except Exception as e:
-        print(f"ERROR: {e}")
-    finally:
-        server.close()
-
-run_server()
+server = ThreadedTCPServer(("127.0.0.1", 8001), ThreadedTCPHandler)
+t = threading.Thread(target=server.serve_forever)
+t.start()
